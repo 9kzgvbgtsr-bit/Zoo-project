@@ -35,9 +35,9 @@ class Animal(ABC):
     def change_energy(self, amount):
         self.energy_level = max(0, min(self.energy_level + amount, self.MAX_ENERGY))
 
-    def sleep(self, position, sleep_time):
+    def sleep(self):
         self.change_energy(10)
-        return f"{self.name} sleeps {position} during the {sleep_time}"
+        return f"{self.name} sleeps {self.sleep_position} during the {self.sleep_time}"
     
     def _spend_energy(self, cost: int, too_tired_msg: str):
         assert cost >= 0, "Energy cost must be non-negative"
@@ -308,7 +308,7 @@ class Zoo:
 
         messages.append("\n---Evening---")
         for a in self.animals:
-            messages.append(a.sleep(a.sleep_position, a.sleep_time))
+            messages.append(a.sleep())
         return messages
     
     def roll_daily_events(self):
