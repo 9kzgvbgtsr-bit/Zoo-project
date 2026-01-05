@@ -2,19 +2,21 @@ from abc import ABC, abstractmethod
 import random
 
 class Animal(ABC):
+    MAX_ENERGY = 100
     def __init__(self, name, age, energy_level):
         self.name = name
         self.age = age
-        self.energy_level = energy_level
+        self.energy_level = max(0, min(int(energy_level), self.MAX_ENERGY))
 
     sleep_position = "comfortably"
     sleep_time = "night"
     allowed_foods: frozenset = frozenset()
     
-    def choose_food(self):
+    # I choose to remove this method
+    """ def choose_food(self):
         if not self.allowed_foods:
             raise NotImplementedError("allowed_foods not defined")
-        return random.choice(tuple(self.allowed_foods))
+        return random.choice(tuple(self.allowed_foods)) """
     
     @abstractmethod
     def eat(self, food):
@@ -30,16 +32,17 @@ class Animal(ABC):
         # How this animal interacts with other animals.
         pass
 
-    def change_energy(self, level):
-        self.energy_level = max(0, self.energy_level + level)
+    def change_energy(self, amount):
+        self.energy_level = max(0, min(self.energy_level + amount, self.MAX_ENERGY))
 
     def sleep(self, position, sleep_time):
         self.change_energy(10)
         return f"{self.name} sleeps {position} during the {sleep_time}"
     
     def _spend_energy(self, cost: int, too_tired_msg: str):
+        assert cost >= 0, "Energy cost must be non-negative"
         # Common rule: if not enough energy, do nothing; otherwise spend energy.
-        if self.energy_level <= 0:
+        if self.energy_level < cost:
             return False, too_tired_msg
         self.change_energy(-cost)
         return True, None
@@ -287,12 +290,17 @@ class Zoo:
         messages = []
         if len(self.animals) < 2:
             return messages
-        for i in range(len(self.animals) - 1):
-            a1 = self.animals[i]
-            a2 = self.animals[i + 1]
+
+        animals_today = self.animals[:]
+        random.shuffle(animals_today)
+
+        for i in range(len(animals_today) - 1):
+            a1 = animals_today[i]
+            a2 = animals_today[i + 1]
 
             messages.append(a1.interact_with(a2))
             messages.append(a2.interact_with(a1))
+
         return messages
 
     def evening(self):
@@ -338,10 +346,6 @@ class Zoo:
             self.day = i
             events = self.roll_daily_events()
             active_visitors = self.visitors if events["visitors_present"] else []
-            if events["rainy"]:
-                output.append("It is raining today.")
-            else:
-                output.append("The weather is clear today.")
             self.restock_daily()
             output.append(f"\n================ Day {i} ================\n")
             output.append("It is raining today." if events["rainy"] else "The weather is clear today.")
